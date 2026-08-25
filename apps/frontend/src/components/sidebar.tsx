@@ -126,6 +126,11 @@ export function Sidebar() {
 
 	const sidebarContent = (
 		<div
+			// data-embed-hide: Colossal HR host exposes New Chat / Stories /
+			// Feed as its own outer-sidebar entries, so nao's inner rail is
+			// pure duplication in embed mode. `html.colossal-embed
+			// [data-embed-hide]` (see styles.css) hides this entire subtree.
+			data-embed-hide
 			className={cn(
 				'flex flex-col h-full overflow-hidden bg-sidebar dark:bg-background',
 				isMobile
