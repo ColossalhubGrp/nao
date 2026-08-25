@@ -334,6 +334,18 @@ html.colossal-embed [data-embed-hide] {
 	display: none !important;
 }
 
+/* Match Colossal's canvas colour exactly so navigating between
+   /analytics/ask (nao iframe) and /analytics/dashboards (Colossal
+   native) doesn't flash a different shade of "light". Colossal
+   canvas is #F4F5FA (hsl 230 27% 97%) — that's oklch(0.968 0.006 265)
+   in the OKlCh space nao uses for its palette. Cards + inputs keep
+   nao's default `--card` / `--panel` (near-white) which happens to
+   match Colossal's `--surface` (also #FFFFFF), so the tile-on-canvas
+   contrast reads the same either side. */
+html.colossal-embed {
+	--background: oklch(0.968 0.006 265);
+}
+
 /* Streamdown styles */
 
 @utility markdown-small {
