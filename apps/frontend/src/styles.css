@@ -212,8 +212,14 @@ code.dollar:before {
 	--card-foreground: oklch(0 0 0 / 0.85);
 	--popover: oklch(1 0 0);
 	--popover-foreground: oklch(0.129 0.042 264.695);
-	--primary: oklch(0.5077 0.281 277.89);
-	--primary-muted: oklch(0.721 0.157 290.2);
+	/* Colossal HR brand tokens — matches ink-800 (#1E1B53) / ink-400
+	   (#5057BE) from the host app's Tailwind theme. Original nao
+	   electric-violet is `oklch(0.5077 0.281 277.89)` / `oklch(0.721
+	   0.157 290.2)`; we shift toward Colossal's more grounded navy
+	   purple (hue ~275 instead of ~278-290) so the embedded chat
+	   feels like part of the same product rather than a separate one. */
+	--primary: oklch(0.29 0.11 275);
+	--primary-muted: oklch(0.52 0.16 279);
 	--primary-foreground: oklch(0.984 0.003 247.858);
 	--secondary: oklch(0.94 0 0);
 	--secondary-foreground: oklch(0.208 0.042 265.755);
@@ -225,11 +231,16 @@ code.dollar:before {
 	--border: oklch(0 0 0 / 0.1);
 	--input: oklch(0 0 0 / 0.1);
 	--ring: oklch(0 0 0 / 0.2);
-	--violet: oklch(0.5077 0.281 277.89);
+	/* Same Colossal shift for the standalone --violet token (used in
+	   isolated accents outside the primary system) and the brand
+	   gradients (buttons, switches, decorative badges). Grades
+	   Colossal ink-700 → ink-900 for the fill, plus a lighter mid
+	   for the border sheen so the button edge still catches light. */
+	--violet: oklch(0.29 0.11 275);
 
-	--gradient-brand: linear-gradient(180deg, #522bff 0%, #6441ff 100%);
-	--gradient-brand-hover: linear-gradient(180deg, #6441ff 0%, #7858ff 100%);
-	--gradient-brand-border: linear-gradient(180deg, #522bff 0%, #3c1bcd 50.48%, #a591ff 100%);
+	--gradient-brand: linear-gradient(180deg, #252263 0%, #161341 100%);
+	--gradient-brand-hover: linear-gradient(180deg, #2C2974 0%, #1E1B53 100%);
+	--gradient-brand-border: linear-gradient(180deg, #252263 0%, #161341 50.48%, #5057BE 100%);
 
 	--chart-1: oklch(0.398 0.07 227.392);
 	--chart-2: oklch(0.646 0.222 41.116);
@@ -258,8 +269,12 @@ code.dollar:before {
 	--card-foreground: oklch(0.984 0.003 247.858);
 	--popover: oklch(0.21 0.008 270);
 	--popover-foreground: oklch(0.984 0.003 247.858);
-	--primary: oklch(0.721 0.157 290.2);
-	--primary-muted: oklch(0.721 0.157 290.2);
+	/* Dark-mode Colossal primary — a touch lighter than the light-mode
+	   ink-800 tone so it reads on the dark background; still at
+	   hue 279 for continuity with the host app. Muted variant lifts
+	   another notch for hover / disabled states. */
+	--primary: oklch(0.62 0.13 279);
+	--primary-muted: oklch(0.72 0.11 279);
 	--primary-foreground: oklch(0.21 0.008 270);
 	--secondary: oklch(0.27 0.012 270);
 	--secondary-foreground: oklch(0.984 0.003 247.858);
