@@ -193,6 +193,7 @@ function HomePage() {
 										src={logoSrc}
 										alt=''
 										aria-hidden
+										data-embed-hide
 										className='pointer-events-none absolute -top-60 left-1/2 -translate-x-1/2 w-full max-w-2xl select-none -z-10'
 									/>
 									<ChatInput />
