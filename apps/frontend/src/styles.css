@@ -313,6 +313,27 @@ code.dollar:before {
 	}
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   Colossal HR embed overrides — activated by main.tsx when the SPA
+   loads with `?embed=1` (see the top of main.tsx). Every rule below
+   is scoped under `html.colossal-embed`; the stand-alone nao SPA
+   (no query param) is completely unaffected.
+
+   Rationale: the embed lives inside the Colossal HR host chrome,
+   which already provides identity (top-right avatar), primary
+   navigation (left rail), and page framing. Nao's own equivalents
+   duplicate that chrome inside the iframe — the goal is to hide
+   the duplicates and let nao be pure chat surface.
+
+   Selectors use `[data-embed-hide]` markers rather than component-
+   specific class names so the rules keep working across nao
+   upgrades — a rebase that renames a class won't silently break the
+   rule as long as the component still carries the marker.
+   ═══════════════════════════════════════════════════════════════════ */
+html.colossal-embed [data-embed-hide] {
+	display: none !important;
+}
+
 /* Streamdown styles */
 
 @utility markdown-small {

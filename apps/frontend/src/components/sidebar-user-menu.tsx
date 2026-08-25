@@ -15,7 +15,7 @@ export function SidebarUserMenu({ isCollapsed, isInSettings }: SidebarUserMenuPr
 	const email = session?.user?.email;
 
 	return (
-		<div className='flex flex-col gap-3'>
+		<div className='flex flex-col gap-3' data-embed-hide>
 			<div
 				className={cn(
 					'group/user flex items-center rounded-lg border-sidebar-border',

@@ -409,29 +409,43 @@ function ChatInputBase({
 					/>
 
 					<InputGroupAddon align='block-end'>
-						{(!isTranscribeReady || (!isRecording && !isTranscribing)) && <ChatInputModelSelect />}
+						{(!isTranscribeReady || (!isRecording && !isTranscribing)) && (
+							// data-embed-hide: Colossal HR is a single-tenant analytics
+							// deployment where the model is a platform decision, not a
+							// user choice. `display:contents` keeps the wrapper out of
+							// layout when visible; the CSS rule under .colossal-embed
+							// then flips it to display:none, hiding the whole subtree.
+							<span data-embed-hide className='contents'>
+								<ChatInputModelSelect />
+							</span>
+						)}
 
 						{isTranscribeReady && isRecording && <SlidingWaveform analyserRef={analyserRef} />}
 
 						<div className='flex items-center gap-1.5 md:gap-2 ml-auto relative'>
-							<ChatInputPlusMenu
-								hasDatabases={hasDatabases}
-								hasSkills={hasSkills}
-								canChatWithNaoData={canChatWithNaoData}
-								isAdminMode={isAdminMode}
-								adminModeLocked={adminModeLocked}
-								onSelectAdminMode={handleSelectAdminMode}
-								onAddAttachment={attachmentUpload.openFilePicker}
-								onAddStory={() => {
-									promptRef.current?.appendMention(
-										{ id: STORY_MENTION_ID, label: 'Story mode' },
-										'#',
-									);
-								}}
-								onOpenSkills={openSkillsMenu}
-								onOpenDatabase={openDatabaseMenu}
-								onFocusPrompt={() => promptRef.current?.focus()}
-							/>
+							{/* data-embed-hide on plus + mic — HR analytics doesn't
+							    need attachments, skills, database swapping, or voice
+							    input in the embedded surface. */}
+							<span data-embed-hide className='contents'>
+								<ChatInputPlusMenu
+									hasDatabases={hasDatabases}
+									hasSkills={hasSkills}
+									canChatWithNaoData={canChatWithNaoData}
+									isAdminMode={isAdminMode}
+									adminModeLocked={adminModeLocked}
+									onSelectAdminMode={handleSelectAdminMode}
+									onAddAttachment={attachmentUpload.openFilePicker}
+									onAddStory={() => {
+										promptRef.current?.appendMention(
+											{ id: STORY_MENTION_ID, label: 'Story mode' },
+											'#',
+										);
+									}}
+									onOpenSkills={openSkillsMenu}
+									onOpenDatabase={openDatabaseMenu}
+									onFocusPrompt={() => promptRef.current?.focus()}
+								/>
+							</span>
 
 							{onCancel && (
 								<Button variant='ghost' type='button' size='sm' onClick={onCancel}>
@@ -442,11 +456,13 @@ function ChatInputBase({
 							<ContextWindowRing />
 
 							{isTranscribeReady && isRecording && <RecordingTimer />}
-							<MicButton
-								state={isTranscribeReady ? transcribeState : 'idle'}
-								onClick={isTranscribeReady ? toggleRecording : showMicWarning}
-								disabled={isRunning && !allowQueueing}
-							/>
+							<span data-embed-hide className='contents'>
+								<MicButton
+									state={isTranscribeReady ? transcribeState : 'idle'}
+									onClick={isTranscribeReady ? toggleRecording : showMicWarning}
+									disabled={isRunning && !allowQueueing}
+								/>
+							</span>
 							{micWarning && <MicWarningBanner onDismiss={() => setMicWarning(false)} />}
 
 							{allowQueueing && isRunning ? (

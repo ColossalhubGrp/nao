@@ -1,6 +1,28 @@
 import './styles.css';
 import 'katex/dist/katex.min.css';
 import { StrictMode } from 'react';
+
+// ─── Colossal HR embed mode ─────────────────────────────────────────
+// When nao is loaded inside Colossal HR's /analytics/ask iframe with
+// `?embed=1`, stamp `colossal-embed` on <html> so styles.css can hide
+// the surfaces that would otherwise duplicate the host chrome:
+//   * the bottom sidebar user card  (identity already in Colossal top-right)
+//   * the "Latest story" section on the empty state
+//   * `+` / mic / model-picker in the input row (analytics-only tenant)
+// Also persisted to sessionStorage so client-side navigations don't
+// need the query string to keep the mode active.
+(() => {
+	try {
+		const url = new URL(window.location.href);
+		const paramSet = url.searchParams.get('embed') === '1';
+		const stored = sessionStorage.getItem('colossal-embed') === '1';
+		const enable = paramSet || stored;
+		if (paramSet) sessionStorage.setItem('colossal-embed', '1');
+		if (enable) document.documentElement.classList.add('colossal-embed');
+	} catch {
+		/* running outside a browser (SSR, tests) — no-op */
+	}
+})();
 import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
