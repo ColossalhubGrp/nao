@@ -46,13 +46,27 @@ function syncThemeColor() {
 	}
 }
 
+/**
+ * Colossal HR embed mode forces `light` — the host chrome is a
+ * light UI, so the iframe painting dark next to it read as two
+ * disconnected products. Detected via the `colossal-embed` class
+ * that `main.tsx` stamps on <html> when `?embed=1` is present.
+ * We also skip localStorage writes in that mode so the user's
+ * standalone-nao preference isn't clobbered by every embed visit.
+ */
+const isColossalEmbed = () =>
+	typeof document !== 'undefined' &&
+	document.documentElement.classList.contains('colossal-embed');
+
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 	const [theme, setTheme] = useState<Theme>(() => {
+		if (isColossalEmbed()) return 'light';
 		const saved = localStorage.getItem('theme');
 		return (saved as Theme) || 'system';
 	});
 
 	useEffect(() => {
+		if (isColossalEmbed()) return; // don't persist embed's forced light
 		localStorage.setItem('theme', theme);
 	}, [theme]);
 	useEffect(() => {
