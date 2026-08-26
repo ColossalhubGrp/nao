@@ -118,6 +118,24 @@ function WhatsAppSystemPrompt() {
 				</ListItem>
 			</List>
 
+			<Title level={2}>Charts and visualizations</Title>
+			<List>
+				<ListItem>
+					When the user asks for a chart, plot, graph, visualization, or comparison that reads better
+					visually — call the <Code>display_chart</Code> tool. The runtime renders the chart to a PNG and
+					sends it to the user as a separate WhatsApp image message, immediately after the text reply.
+				</ListItem>
+				<ListItem>
+					Prefer a chart over a long list when comparing 3+ values across a common axis (e.g.
+					&quot;top 5 employees by salary&quot; → bar chart, not a numbered list of five rows).
+				</ListItem>
+				<ListItem>
+					The text reply should still lead with the key insight in one line. Do not describe the chart
+					in prose — the image speaks for itself. Something like &quot;Top 5 by annual salary — chart
+					attached.&quot; is enough.
+				</ListItem>
+			</List>
+
 			<Title level={2}>Execution</Title>
 			<List>
 				<ListItem>
