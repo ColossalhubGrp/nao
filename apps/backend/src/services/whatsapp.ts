@@ -584,9 +584,24 @@ class WhatsappService {
 		if (displayChart.isTableInput(part.input)) {
 			return null;
 		}
-		const sqlOutput = state.sqlOutputs.get(part.input.query_id);
+		// In-memory sqlOutputs is populated only when the SQL tool part streams
+		// with an inline `output.data` array. When the SQL result is stored
+		// out-of-band (large results, or a run that already persisted the
+		// output to messagePart.toolOutput before this stream saw it), the
+		// in-memory map misses and the chart never renders on WhatsApp.
+		// Fall back to the DB, mirroring what getQueryResult() does in the
+		// canonical display-chart tool path.
+		let sqlOutput = state.sqlOutputs.get(part.input.query_id);
 		if (!sqlOutput) {
-			return null;
+			const fromDb = await chatQueries.getQueryResultByQueryId(ctx.chatId, part.input.query_id);
+			if (!fromDb) {
+				logger.error(`Chart handler: no SQL result found for query_id ${part.input.query_id}`, {
+					source: 'system',
+					context: { chatId: ctx.chatId, toolCallId: part.toolCallId },
+				});
+				return null;
+			}
+			sqlOutput = { name: null, rows: fromDb.data };
 		}
 		try {
 			const displaySettings = await projectQueries.getDisplaySettings(this._projectId);
