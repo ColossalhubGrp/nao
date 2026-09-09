@@ -52,22 +52,18 @@ export const AssistantMessage = memo(
 		const showActions = message.id !== storyIntroMessageId;
 		const hasFeedback = message.feedback != null;
 
-		// Concise mode: hide the model's process (reasoning + technical
-		// tool calls) by default, show only substantive output — final
-		// text, charts, stories, execute_sql results. Non-technical
-		// readers should see straight answers, not "Read columns.md
-		// from tabPayrollRun" or "Explored 2 files". The single
-		// "Show reasoning" toggle lets curious users peek behind the
-		// curtain, mirroring Claude's own chat pattern.
-		//
-		// While the message is still streaming (`!isSettled`) we always
-		// show everything so the user sees live progress. The collapse
-		// engages only once the turn is complete.
+		// Concise mode: hide the model's process (reasoning, tool calls,
+		// SQL, mid-flow narrative) at ALL times by default and show only
+		// the substantive output — the chart / map / story + the summary
+		// text that follows it. Non-technical readers should see straight
+		// answers, not a stream of "Read columns.md" flickering by while
+		// they wait. The "Show reasoning" toggle lets curious users peek
+		// behind the curtain; the existing loader shimmer + follow-up
+		// input state carry the "something's happening" signal.
 		const [showReasoning, setShowReasoning] = useState(false);
 		const conciseParts = useMemo(() => filterConciseVisible(messageParts), [messageParts]);
 		const hasHidden = conciseParts.length < messageParts.length;
-		const visibleParts: GroupedMessagePart[] =
-			!isSettled || showReasoning ? messageParts : conciseParts;
+		const visibleParts: GroupedMessagePart[] = showReasoning ? messageParts : conciseParts;
 
 		if (!message.parts.length && isSettled) {
 			return null;
@@ -80,7 +76,7 @@ export const AssistantMessage = memo(
 		return (
 			<AssistantMessageProvider isSettled={isSettled}>
 				<div className={cn('group px-3 flex flex-col gap-2 bg-transparent')}>
-					{isSettled && hasHidden && (
+					{hasHidden && (
 						<ReasoningToggle
 							open={showReasoning}
 							onToggle={() => setShowReasoning((v) => !v)}
