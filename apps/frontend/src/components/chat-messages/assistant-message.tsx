@@ -6,8 +6,8 @@ import {
 	areGroupedMessagePartArraysEqual,
 	areGroupedMessagePartsEqual,
 	checkAssistantMessageHasContent,
+	filterConciseVisible,
 	groupToolCalls,
-	isProcessPart,
 	isToolGroupPart,
 	isToolUIPart,
 } from '@/lib/ai';
@@ -64,14 +64,10 @@ export const AssistantMessage = memo(
 		// show everything so the user sees live progress. The collapse
 		// engages only once the turn is complete.
 		const [showReasoning, setShowReasoning] = useState(false);
-		const hasProcess = useMemo(
-			() => messageParts.some((p) => isProcessPart(p, toolCallDensity)),
-			[messageParts, toolCallDensity],
-		);
-		const visibleParts = useMemo<GroupedMessagePart[]>(() => {
-			if (!isSettled || showReasoning) return messageParts;
-			return messageParts.filter((p) => !isProcessPart(p, toolCallDensity));
-		}, [messageParts, isSettled, showReasoning, toolCallDensity]);
+		const conciseParts = useMemo(() => filterConciseVisible(messageParts), [messageParts]);
+		const hasHidden = conciseParts.length < messageParts.length;
+		const visibleParts: GroupedMessagePart[] =
+			!isSettled || showReasoning ? messageParts : conciseParts;
 
 		if (!message.parts.length && isSettled) {
 			return null;
@@ -84,7 +80,7 @@ export const AssistantMessage = memo(
 		return (
 			<AssistantMessageProvider isSettled={isSettled}>
 				<div className={cn('group px-3 flex flex-col gap-2 bg-transparent')}>
-					{isSettled && hasProcess && (
+					{isSettled && hasHidden && (
 						<ReasoningToggle
 							open={showReasoning}
 							onToggle={() => setShowReasoning((v) => !v)}

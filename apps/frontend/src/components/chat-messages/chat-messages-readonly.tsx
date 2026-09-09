@@ -7,7 +7,7 @@ import type { StickToBottomContext } from 'use-stick-to-bottom';
 import type { ForkMetadata, UIMessage } from '@nao/backend/chat';
 import type { GroupedMessagePart } from '@/types/ai';
 import { SelectionCitationExcerpt } from '@/components/selection-citation-excerpt';
-import { checkAssistantMessageHasContent, groupMessages, groupToolCalls, isProcessPart } from '@/lib/ai';
+import { checkAssistantMessageHasContent, filterConciseVisible, groupMessages, groupToolCalls } from '@/lib/ai';
 import { cn } from '@/lib/utils';
 import {
 	Conversation,
@@ -157,18 +157,13 @@ const AssistantMessageReadonly = memo(
 		const isCompacting = message.parts.at(-1)?.type === 'data-compactionSummaryStarted';
 
 		// Same concise-mode treatment the live assistant renderer uses:
-		// hide the model's process (reasoning + technical tool calls)
-		// by default so read-only viewers see straight answers. Toggle
-		// reveals everything.
+		// hide the model's process (reasoning + technical tool calls +
+		// non-trailing text) by default so read-only viewers see
+		// straight answers. Toggle reveals everything.
 		const [showReasoning, setShowReasoning] = useState(false);
-		const hasProcess = useMemo(
-			() => messageParts.some((p) => isProcessPart(p, toolCallDensity)),
-			[messageParts, toolCallDensity],
-		);
-		const visibleParts = useMemo<GroupedMessagePart[]>(() => {
-			if (showReasoning) return messageParts;
-			return messageParts.filter((p) => !isProcessPart(p, toolCallDensity));
-		}, [messageParts, showReasoning, toolCallDensity]);
+		const conciseParts = useMemo(() => filterConciseVisible(messageParts), [messageParts]);
+		const hasHidden = conciseParts.length < messageParts.length;
+		const visibleParts: GroupedMessagePart[] = showReasoning ? messageParts : conciseParts;
 
 		if (!message.parts.length) {
 			return null;
@@ -177,7 +172,7 @@ const AssistantMessageReadonly = memo(
 		return (
 			<AssistantMessageProvider isSettled={true}>
 				<div className={cn('group px-3 flex flex-col gap-2 bg-transparent')} data-replay-target-id={message.id}>
-					{hasProcess && (
+					{hasHidden && (
 						<button
 							type='button'
 							onClick={() => setShowReasoning((v) => !v)}

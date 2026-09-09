@@ -182,28 +182,86 @@ export const isPartGroupable = (part: UIMessagePart, density: ToolCallDensity = 
 };
 
 /**
- * "Process" parts are the model's reasoning + non-substantive tool calls
- * (file reads, folder listings, DB introspection, previews). Non-technical
- * readers don't want them on screen by default — the concise mode in
- * <AssistantMessage> hides everything this predicate matches and shows
- * a single "Show reasoning" toggle. Once revealed, the individual
- * expandables inside (per-tool, per-reasoning-block) keep working
- * exactly as they did before.
+ * Tools that ARE the substantive output HR readers came to see: the
+ * chart, the map, the story, a clarifying question, a follow-up chip.
+ * Everything else — including SQL / Python / DB introspection — is
+ * technical scaffolding hidden by default in concise mode.
  *
- * Kept as its own helper (rather than reusing isPartGroupable) so it
- * can operate on the ALREADY-GROUPED parts array — tool-groups are the
- * dominant hidden shape once grouping has run.
+ * Deliberately narrower than `NON_COLLAPSIBLE_TOOLS_BY_DENSITY['compact']`
+ * would strictly imply: even in 'detailed' density we only surface
+ * these to non-technical users. Users who WANT to see the SQL can hit
+ * the "Show reasoning" toggle.
  */
-export const isProcessPart = (part: GroupedMessagePart, density: ToolCallDensity = 'detailed'): boolean => {
+const CONCISE_VISIBLE_TOOLS = new Set<string>([
+	'display_chart',
+	'display_map',
+	'story',
+	'suggest_follow_ups',
+	'clarification',
+]);
+
+const isConciseVisibleTool = (part: GroupedMessagePart): boolean => {
+	if (isToolGroupPart(part)) return false;
+	if (!isToolUIPart(part)) return false;
+	return CONCISE_VISIBLE_TOOLS.has(getToolName(part));
+};
+
+/**
+ * "Process" parts are the model's reasoning + non-substantive tool calls
+ * (file reads, folder listings, DB introspection, SQL, Python, previews).
+ * Non-technical readers don't want them on screen by default — the concise
+ * mode in <AssistantMessage> hides everything this predicate matches and
+ * shows a single "Show reasoning" toggle. Once revealed, the individual
+ * expandables inside (per-tool, per-reasoning-block) keep working exactly
+ * as they did before.
+ *
+ * NB: `text` parts are handled separately by `filterConciseVisible` — we
+ * keep only the LAST run of them (the summary that follows the primary
+ * substantive output), and treat earlier text as process narration.
+ * Text-as-process happens because DeepSeek and friends narrate their
+ * process in prose rather than in reasoning blocks.
+ */
+export const isProcessPart = (part: GroupedMessagePart, _density: ToolCallDensity = 'detailed'): boolean => {
 	if (isToolGroupPart(part)) return true;
 	if (isReasoningPart(part)) return true;
-	if (isToolUIPart(part)) {
-		const toolName = getToolName(part);
-		const nonCollapsibleTools =
-			NON_COLLAPSIBLE_TOOLS_BY_DENSITY[density] ?? NON_COLLAPSIBLE_TOOLS_BY_DENSITY.detailed;
-		return !nonCollapsibleTools.includes(toolName as StaticToolName);
-	}
+	if (isToolUIPart(part)) return !isConciseVisibleTool(part);
 	return false;
+};
+
+/**
+ * Concise-mode visibility filter. Given the already-grouped parts array,
+ * return only what a non-technical reader should see by default:
+ *
+ *   - the primary substantive tool(s): chart / map / story / clarification /
+ *     follow-up chips
+ *   - the trailing run of text parts (the summary paragraph after the
+ *     last substantive output)
+ *   - data-compaction / data-compactionSummaryStarted parts (system
+ *     notices, not process narration)
+ *
+ * Everything else — reasoning, tool-groups, SQL, Python, DB introspection,
+ * and any text that appears BEFORE the last substantive output — is
+ * hidden until the reader opens the "Show reasoning" pill.
+ */
+export const filterConciseVisible = (parts: GroupedMessagePart[]): GroupedMessagePart[] => {
+	// Find the index of the last substantive output — the anchor after
+	// which any text is treated as the summary/final answer. If the turn
+	// has no substantive output at all, every text part becomes trailing
+	// (the model's answer IS the text) so nothing gets swallowed.
+	let anchorIdx = -1;
+	for (let i = parts.length - 1; i >= 0; i--) {
+		if (isConciseVisibleTool(parts[i])) {
+			anchorIdx = i;
+			break;
+		}
+	}
+
+	return parts.filter((part, i) => {
+		if (isConciseVisibleTool(part)) return true;
+		if (part.type === 'data-compaction' || part.type === 'data-compactionSummaryStarted') return true;
+		if (part.type === 'text') return i > anchorIdx;
+		return false;
+	});
 };
 
 const areToolPartsEqual = (left: UIToolPart, right: UIToolPart): boolean => {
