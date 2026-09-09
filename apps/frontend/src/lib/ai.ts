@@ -181,6 +181,31 @@ export const isPartGroupable = (part: UIMessagePart, density: ToolCallDensity = 
 	return false;
 };
 
+/**
+ * "Process" parts are the model's reasoning + non-substantive tool calls
+ * (file reads, folder listings, DB introspection, previews). Non-technical
+ * readers don't want them on screen by default — the concise mode in
+ * <AssistantMessage> hides everything this predicate matches and shows
+ * a single "Show reasoning" toggle. Once revealed, the individual
+ * expandables inside (per-tool, per-reasoning-block) keep working
+ * exactly as they did before.
+ *
+ * Kept as its own helper (rather than reusing isPartGroupable) so it
+ * can operate on the ALREADY-GROUPED parts array — tool-groups are the
+ * dominant hidden shape once grouping has run.
+ */
+export const isProcessPart = (part: GroupedMessagePart, density: ToolCallDensity = 'detailed'): boolean => {
+	if (isToolGroupPart(part)) return true;
+	if (isReasoningPart(part)) return true;
+	if (isToolUIPart(part)) {
+		const toolName = getToolName(part);
+		const nonCollapsibleTools =
+			NON_COLLAPSIBLE_TOOLS_BY_DENSITY[density] ?? NON_COLLAPSIBLE_TOOLS_BY_DENSITY.detailed;
+		return !nonCollapsibleTools.includes(toolName as StaticToolName);
+	}
+	return false;
+};
+
 const areToolPartsEqual = (left: UIToolPart, right: UIToolPart): boolean => {
 	const leftOutput = 'output' in left ? left.output : undefined;
 	const rightOutput = 'output' in right ? right.output : undefined;

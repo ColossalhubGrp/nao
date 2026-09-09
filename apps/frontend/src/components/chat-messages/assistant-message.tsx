@@ -1,4 +1,5 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
+import { ChevronDown, Sparkles } from 'lucide-react';
 import type { UIMessage } from '@nao/backend/chat';
 import type { GroupedMessagePart } from '@/types/ai';
 import {
@@ -6,6 +7,7 @@ import {
 	areGroupedMessagePartsEqual,
 	checkAssistantMessageHasContent,
 	groupToolCalls,
+	isProcessPart,
 	isToolGroupPart,
 	isToolUIPart,
 } from '@/lib/ai';
@@ -50,6 +52,27 @@ export const AssistantMessage = memo(
 		const showActions = message.id !== storyIntroMessageId;
 		const hasFeedback = message.feedback != null;
 
+		// Concise mode: hide the model's process (reasoning + technical
+		// tool calls) by default, show only substantive output — final
+		// text, charts, stories, execute_sql results. Non-technical
+		// readers should see straight answers, not "Read columns.md
+		// from tabPayrollRun" or "Explored 2 files". The single
+		// "Show reasoning" toggle lets curious users peek behind the
+		// curtain, mirroring Claude's own chat pattern.
+		//
+		// While the message is still streaming (`!isSettled`) we always
+		// show everything so the user sees live progress. The collapse
+		// engages only once the turn is complete.
+		const [showReasoning, setShowReasoning] = useState(false);
+		const hasProcess = useMemo(
+			() => messageParts.some((p) => isProcessPart(p, toolCallDensity)),
+			[messageParts, toolCallDensity],
+		);
+		const visibleParts = useMemo<GroupedMessagePart[]>(() => {
+			if (!isSettled || showReasoning) return messageParts;
+			return messageParts.filter((p) => !isProcessPart(p, toolCallDensity));
+		}, [messageParts, isSettled, showReasoning, toolCallDensity]);
+
 		if (!message.parts.length && isSettled) {
 			return null;
 		}
@@ -61,7 +84,13 @@ export const AssistantMessage = memo(
 		return (
 			<AssistantMessageProvider isSettled={isSettled}>
 				<div className={cn('group px-3 flex flex-col gap-2 bg-transparent')}>
-					<MessageParts parts={messageParts} />
+					{isSettled && hasProcess && (
+						<ReasoningToggle
+							open={showReasoning}
+							onToggle={() => setShowReasoning((v) => !v)}
+						/>
+					)}
+					<MessageParts parts={visibleParts} />
 
 					{isSettled && !hasContent && (
 						<div className='text-muted-foreground italic text-sm'>No response</div>
@@ -90,6 +119,31 @@ export const AssistantMessage = memo(
 		);
 	},
 );
+
+/**
+ * The single "Show reasoning" pill at the top of an assistant turn.
+ * Renders only when the settled turn actually has hidden process parts —
+ * a straight-through answer with no tool use or thinking never shows it.
+ */
+function ReasoningToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+	return (
+		<button
+			type='button'
+			onClick={onToggle}
+			className={cn(
+				'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
+				'border-border/60 text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+			)}
+			aria-expanded={open}
+		>
+			<Sparkles className='h-3 w-3' />
+			{open ? 'Hide reasoning' : 'Show reasoning'}
+			<ChevronDown
+				className={cn('h-3 w-3 transition-transform', open && 'rotate-180')}
+			/>
+		</button>
+	);
+}
 
 export const MessageParts = memo(
 	({ parts }: { parts: GroupedMessagePart[] }) => {

@@ -1,12 +1,13 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ChevronDown, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { filterSupersededExecuteSqlParts } from '@nao/shared/execute-sql-parts';
 import { UserMessageBubble } from './user-message';
 import type { StickToBottomContext } from 'use-stick-to-bottom';
 import type { ForkMetadata, UIMessage } from '@nao/backend/chat';
+import type { GroupedMessagePart } from '@/types/ai';
 import { SelectionCitationExcerpt } from '@/components/selection-citation-excerpt';
-import { checkAssistantMessageHasContent, groupMessages, groupToolCalls } from '@/lib/ai';
+import { checkAssistantMessageHasContent, groupMessages, groupToolCalls, isProcessPart } from '@/lib/ai';
 import { cn } from '@/lib/utils';
 import {
 	Conversation,
@@ -155,6 +156,20 @@ const AssistantMessageReadonly = memo(
 		const hasContent = useMemo(() => checkAssistantMessageHasContent(message), [message]);
 		const isCompacting = message.parts.at(-1)?.type === 'data-compactionSummaryStarted';
 
+		// Same concise-mode treatment the live assistant renderer uses:
+		// hide the model's process (reasoning + technical tool calls)
+		// by default so read-only viewers see straight answers. Toggle
+		// reveals everything.
+		const [showReasoning, setShowReasoning] = useState(false);
+		const hasProcess = useMemo(
+			() => messageParts.some((p) => isProcessPart(p, toolCallDensity)),
+			[messageParts, toolCallDensity],
+		);
+		const visibleParts = useMemo<GroupedMessagePart[]>(() => {
+			if (showReasoning) return messageParts;
+			return messageParts.filter((p) => !isProcessPart(p, toolCallDensity));
+		}, [messageParts, showReasoning, toolCallDensity]);
+
 		if (!message.parts.length) {
 			return null;
 		}
@@ -162,7 +177,24 @@ const AssistantMessageReadonly = memo(
 		return (
 			<AssistantMessageProvider isSettled={true}>
 				<div className={cn('group px-3 flex flex-col gap-2 bg-transparent')} data-replay-target-id={message.id}>
-					<MessageParts parts={messageParts} />
+					{hasProcess && (
+						<button
+							type='button'
+							onClick={() => setShowReasoning((v) => !v)}
+							className={cn(
+								'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
+								'border-border/60 text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+							)}
+							aria-expanded={showReasoning}
+						>
+							<Sparkles className='h-3 w-3' />
+							{showReasoning ? 'Hide reasoning' : 'Show reasoning'}
+							<ChevronDown
+								className={cn('h-3 w-3 transition-transform', showReasoning && 'rotate-180')}
+							/>
+						</button>
+					)}
+					<MessageParts parts={visibleParts} />
 
 					{message.feedback && (
 						<div
