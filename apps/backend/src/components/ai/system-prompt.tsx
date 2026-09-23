@@ -128,6 +128,19 @@ export function SystemPrompt({
 			{hasTool('execute_sql') && <LocalDatabaseBlock canSaveResults={hasTool('write')} />}
 			<Title level={2}>Chart{hasTool('display_map') ? ' & Map' : ''} Rules</Title>
 			<List>
+				{hasTool('display_chart') && (
+					<ListItem>
+						<Bold>When to reach for display_chart:</Bold> any question comparing 3+ values across
+						a shared axis (headcount by department, revenue over time, female ratio by grade), OR
+						any question that explicitly asks for a chart / plot / graph / visualization / bar /
+						line / donut. Call <Bold>display_chart</Bold> right after the
+						<Bold>execute_sql</Bold> that produced the numbers. Do NOT answer with a prose-only
+						description when a visualization was requested, or when the shape of the data would
+						read better as one. The runtime renders the chart to an image and delivers it inline
+						with your text reply — treat it as a first-class part of the answer, not an optional
+						extra.
+					</ListItem>
+				)}
 				<ListItem>
 					For display_chart x_axis_type: use "date" only when x-axis values are parseable by JavaScript Date
 					(e.g. YYYY-MM-DD). Use "category" for quarter labels (quarter_ending), fiscal periods (FY25-Q1), or
