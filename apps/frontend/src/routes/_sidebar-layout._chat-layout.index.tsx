@@ -70,12 +70,14 @@ function HomePage() {
 			return;
 		}
 		askedFromUrl.current = true;
-		void queueOrSendMessage(incomingQuestion, []);
+		// Strip q from the URL first (replace, so back doesn't re-ask),
+		// then send — the send navigates into the newly created chat.
 		void navigate({
 			to: '/',
 			search: { admin: adminSearch, q: undefined },
 			replace: true,
 		});
+		void queueOrSendMessage({ text: incomingQuestion });
 	}, [incomingQuestion, canChatWithNaoData, queueOrSendMessage, navigate, adminSearch]);
 
 	const project = useQuery(trpc.project.getCurrent.queryOptions());
