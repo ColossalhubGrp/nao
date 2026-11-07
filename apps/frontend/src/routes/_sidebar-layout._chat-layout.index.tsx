@@ -23,8 +23,15 @@ import { StoryCard } from '@/components/stories-groups';
 import { useResizeObserver } from '@/hooks/use-resize-observer';
 
 export const Route = createFileRoute('/_sidebar-layout/_chat-layout/')({
-	validateSearch: (search: Record<string, unknown>): { admin?: boolean } => ({
+	validateSearch: (search: Record<string, unknown>): { admin?: boolean; q?: string } => ({
 		admin: search.admin === true || search.admin === 'true' ? true : undefined,
+		// `q` lets the Colossal Hub dashboard hand a question straight
+		// into the chat (suggestion chips on /dashboard). Capped so a
+		// mangled URL can't inject an essay.
+		q:
+			typeof search.q === 'string' && search.q.trim().length > 0
+				? search.q.slice(0, 500)
+				: undefined,
 	}),
 	component: RouteComponent,
 });
@@ -40,10 +47,10 @@ function RouteComponent() {
 function HomePage() {
 	const { data: session } = useSession();
 	const username = session?.user?.name;
-	const { setAdminMode } = useAgentContext();
+	const { setAdminMode, queueOrSendMessage } = useAgentContext();
 	const messages = useAgentMessages();
 	const { canChatWithNaoData } = usePermissions();
-	const { admin: adminSearch } = Route.useSearch();
+	const { admin: adminSearch, q: incomingQuestion } = Route.useSearch();
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 
@@ -53,6 +60,23 @@ function HomePage() {
 		}
 		setAdminMode(adminSearch === true);
 	}, [canChatWithNaoData, adminSearch, setAdminMode]);
+
+	// A question handed over in the URL (?q=...) is asked immediately —
+	// the dashboard's suggestion chips land here. Fire once, then strip
+	// q from the URL so a reload doesn't re-ask it.
+	const askedFromUrl = useRef(false);
+	useEffect(() => {
+		if (!incomingQuestion || askedFromUrl.current || !canChatWithNaoData) {
+			return;
+		}
+		askedFromUrl.current = true;
+		void queueOrSendMessage(incomingQuestion, []);
+		void navigate({
+			to: '/',
+			search: { admin: adminSearch, q: undefined },
+			replace: true,
+		});
+	}, [incomingQuestion, canChatWithNaoData, queueOrSendMessage, navigate, adminSearch]);
 
 	const project = useQuery(trpc.project.getCurrent.queryOptions());
 	const projects = useQuery(trpc.project.listForCurrentUser.queryOptions());
