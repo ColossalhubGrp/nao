@@ -21,6 +21,7 @@ import { Route as SidebarLayoutChatLayoutRouteImport } from './routes/_sidebar-l
 import { Route as SidebarLayoutStoriesIndexRouteImport } from './routes/_sidebar-layout.stories.index'
 import { Route as SidebarLayoutSettingsIndexRouteImport } from './routes/_sidebar-layout.settings.index'
 import { Route as SidebarLayoutFeedIndexRouteImport } from './routes/_sidebar-layout.feed.index'
+import { Route as SidebarLayoutChatsIndexRouteImport } from './routes/_sidebar-layout.chats.index'
 import { Route as SidebarLayoutChatLayoutIndexRouteImport } from './routes/_sidebar-layout._chat-layout.index'
 import { Route as EmbedStoryStoryIdRouteImport } from './routes/embed.story.$storyId'
 import { Route as EmbedMapMapEmbedIdRouteImport } from './routes/embed.map.$mapEmbedId'
@@ -115,6 +116,11 @@ const SidebarLayoutSettingsIndexRoute =
 const SidebarLayoutFeedIndexRoute = SidebarLayoutFeedIndexRouteImport.update({
   id: '/feed/',
   path: '/feed/',
+  getParentRoute: () => SidebarLayoutRoute,
+} as any)
+const SidebarLayoutChatsIndexRoute = SidebarLayoutChatsIndexRouteImport.update({
+  id: '/chats/',
+  path: '/chats/',
   getParentRoute: () => SidebarLayoutRoute,
 } as any)
 const SidebarLayoutChatLayoutIndexRoute =
@@ -326,7 +332,6 @@ const SidebarLayoutSettingsUsageReplayChatIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof SidebarLayoutChatLayoutIndexRoute
   '/consent': typeof ConsentRoute
   '/embed': typeof EmbedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
@@ -353,9 +358,11 @@ export interface FileRoutesByFullPath {
   '/embed/chart/$chartEmbedId': typeof EmbedChartChartEmbedIdRoute
   '/embed/map/$mapEmbedId': typeof EmbedMapMapEmbedIdRoute
   '/embed/story/$storyId': typeof EmbedStoryStoryIdRoute
-  '/feed/': typeof SidebarLayoutFeedIndexRoute
+  '/': typeof SidebarLayoutChatLayoutIndexRoute
+  '/chats': typeof SidebarLayoutChatsIndexRoute
+  '/feed': typeof SidebarLayoutFeedIndexRoute
   '/settings/': typeof SidebarLayoutSettingsIndexRoute
-  '/stories/': typeof SidebarLayoutStoriesIndexRoute
+  '/stories': typeof SidebarLayoutStoriesIndexRoute
   '/settings/project/agent': typeof SidebarLayoutSettingsProjectAgentRoute
   '/settings/project/budgets': typeof SidebarLayoutSettingsProjectBudgetsRoute
   '/settings/project/mcp-endpoint': typeof SidebarLayoutSettingsProjectMcpEndpointRoute
@@ -373,7 +380,6 @@ export interface FileRoutesByFullPath {
   '/stories/preview/$chatId/$storySlug': typeof SidebarLayoutStoriesPreviewChatIdStorySlugRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof SidebarLayoutChatLayoutIndexRoute
   '/consent': typeof ConsentRoute
   '/embed': typeof EmbedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
@@ -398,6 +404,8 @@ export interface FileRoutesByTo {
   '/embed/chart/$chartEmbedId': typeof EmbedChartChartEmbedIdRoute
   '/embed/map/$mapEmbedId': typeof EmbedMapMapEmbedIdRoute
   '/embed/story/$storyId': typeof EmbedStoryStoryIdRoute
+  '/': typeof SidebarLayoutChatLayoutIndexRoute
+  '/chats': typeof SidebarLayoutChatsIndexRoute
   '/feed': typeof SidebarLayoutFeedIndexRoute
   '/settings': typeof SidebarLayoutSettingsIndexRoute
   '/stories': typeof SidebarLayoutStoriesIndexRoute
@@ -448,6 +456,7 @@ export interface FileRoutesById {
   '/embed/map/$mapEmbedId': typeof EmbedMapMapEmbedIdRoute
   '/embed/story/$storyId': typeof EmbedStoryStoryIdRoute
   '/_sidebar-layout/_chat-layout/': typeof SidebarLayoutChatLayoutIndexRoute
+  '/_sidebar-layout/chats/': typeof SidebarLayoutChatsIndexRoute
   '/_sidebar-layout/feed/': typeof SidebarLayoutFeedIndexRoute
   '/_sidebar-layout/settings/': typeof SidebarLayoutSettingsIndexRoute
   '/_sidebar-layout/stories/': typeof SidebarLayoutStoriesIndexRoute
@@ -470,7 +479,6 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/consent'
     | '/embed'
     | '/forgot-password'
@@ -497,9 +505,11 @@ export interface FileRouteTypes {
     | '/embed/chart/$chartEmbedId'
     | '/embed/map/$mapEmbedId'
     | '/embed/story/$storyId'
-    | '/feed/'
+    | '/'
+    | '/chats'
+    | '/feed'
     | '/settings/'
-    | '/stories/'
+    | '/stories'
     | '/settings/project/agent'
     | '/settings/project/budgets'
     | '/settings/project/mcp-endpoint'
@@ -517,7 +527,6 @@ export interface FileRouteTypes {
     | '/stories/preview/$chatId/$storySlug'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/consent'
     | '/embed'
     | '/forgot-password'
@@ -542,6 +551,8 @@ export interface FileRouteTypes {
     | '/embed/chart/$chartEmbedId'
     | '/embed/map/$mapEmbedId'
     | '/embed/story/$storyId'
+    | '/'
+    | '/chats'
     | '/feed'
     | '/settings'
     | '/stories'
@@ -591,6 +602,7 @@ export interface FileRouteTypes {
     | '/embed/map/$mapEmbedId'
     | '/embed/story/$storyId'
     | '/_sidebar-layout/_chat-layout/'
+    | '/_sidebar-layout/chats/'
     | '/_sidebar-layout/feed/'
     | '/_sidebar-layout/settings/'
     | '/_sidebar-layout/stories/'
@@ -668,7 +680,7 @@ declare module '@tanstack/react-router' {
     '/_sidebar-layout': {
       id: '/_sidebar-layout'
       path: ''
-      fullPath: '/'
+      fullPath: ''
       preLoaderRoute: typeof SidebarLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -682,14 +694,14 @@ declare module '@tanstack/react-router' {
     '/_sidebar-layout/_chat-layout': {
       id: '/_sidebar-layout/_chat-layout'
       path: ''
-      fullPath: '/'
+      fullPath: ''
       preLoaderRoute: typeof SidebarLayoutChatLayoutRouteImport
       parentRoute: typeof SidebarLayoutRoute
     }
     '/_sidebar-layout/stories/': {
       id: '/_sidebar-layout/stories/'
       path: '/stories'
-      fullPath: '/stories/'
+      fullPath: '/stories'
       preLoaderRoute: typeof SidebarLayoutStoriesIndexRouteImport
       parentRoute: typeof SidebarLayoutRoute
     }
@@ -703,8 +715,15 @@ declare module '@tanstack/react-router' {
     '/_sidebar-layout/feed/': {
       id: '/_sidebar-layout/feed/'
       path: '/feed'
-      fullPath: '/feed/'
+      fullPath: '/feed'
       preLoaderRoute: typeof SidebarLayoutFeedIndexRouteImport
+      parentRoute: typeof SidebarLayoutRoute
+    }
+    '/_sidebar-layout/chats/': {
+      id: '/_sidebar-layout/chats/'
+      path: '/chats'
+      fullPath: '/chats'
+      preLoaderRoute: typeof SidebarLayoutChatsIndexRouteImport
       parentRoute: typeof SidebarLayoutRoute
     }
     '/_sidebar-layout/_chat-layout/': {
@@ -1079,6 +1098,7 @@ interface SidebarLayoutRouteChildren {
   SidebarLayoutSettingsRoute: typeof SidebarLayoutSettingsRouteWithChildren
   SidebarLayoutAutomationsAutomationIdRoute: typeof SidebarLayoutAutomationsAutomationIdRoute
   SidebarLayoutSharedChatShareIdRoute: typeof SidebarLayoutSharedChatShareIdRoute
+  SidebarLayoutChatsIndexRoute: typeof SidebarLayoutChatsIndexRoute
   SidebarLayoutFeedIndexRoute: typeof SidebarLayoutFeedIndexRoute
   SidebarLayoutStoriesIndexRoute: typeof SidebarLayoutStoriesIndexRoute
   SidebarLayoutStoriesSharedShareIdRoute: typeof SidebarLayoutStoriesSharedShareIdRoute
@@ -1092,6 +1112,7 @@ const SidebarLayoutRouteChildren: SidebarLayoutRouteChildren = {
   SidebarLayoutAutomationsAutomationIdRoute:
     SidebarLayoutAutomationsAutomationIdRoute,
   SidebarLayoutSharedChatShareIdRoute: SidebarLayoutSharedChatShareIdRoute,
+  SidebarLayoutChatsIndexRoute: SidebarLayoutChatsIndexRoute,
   SidebarLayoutFeedIndexRoute: SidebarLayoutFeedIndexRoute,
   SidebarLayoutStoriesIndexRoute: SidebarLayoutStoriesIndexRoute,
   SidebarLayoutStoriesSharedShareIdRoute:

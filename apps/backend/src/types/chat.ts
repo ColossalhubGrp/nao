@@ -189,6 +189,23 @@ export const AgentRequestUserMessageSchema = z.object({
 	citation: CitationDataSchema.optional(),
 });
 
+
+/**
+ * Row-level RBAC scope for the agent run. When present and
+ * `employeeIds` is an array, execute_sql refuses to run any query
+ * that touches an employee-scoped table without at least one of
+ * these IDs quoted somewhere in the SQL. `null` employeeIds =
+ * unrestricted (HR admin) — no filter is enforced.
+ *
+ * Added 2026-09-25 for the WhatsApp Q&A RBAC Phase 3 fix. The
+ * matching outer layer lives in colossal_bi.bi_chatbot.whatsapp.
+ */
+export const ViewerScopeSchema = z.object({
+	employeeIds: z.array(z.string()).nullable(),
+	scopeLabel: z.enum(['self', 'team', 'all', 'none']).optional(),
+}).nullable();
+export type ViewerScope = z.infer<typeof ViewerScopeSchema>;
+
 export type AgentRequest = z.infer<typeof AgentRequestSchema>;
 export const AgentRequestSchema = z.object({
 	message: AgentRequestUserMessageSchema,
@@ -199,4 +216,6 @@ export const AgentRequestSchema = z.object({
 	timezone: z.string().optional(),
 	/** When true, the message runs in admin mode: it queries nao's own usage database instead of the warehouse. */
 	adminMode: z.boolean().optional(),
+	/** Row-level access scope enforced by execute_sql; see ViewerScopeSchema. */
+	viewerScope: ViewerScopeSchema.optional(),
 });

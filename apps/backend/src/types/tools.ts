@@ -1,6 +1,7 @@
 import type { displayChart, displayMap } from '@nao/shared/tools';
 
 import { AgentSettings } from './agent-settings';
+import type { ViewerScope } from './chat';
 
 export interface QueryResult {
 	columns: string[];
@@ -35,6 +36,13 @@ export interface ToolContext {
 	 */
 	queryResults: Map<string, QueryResult>;
 	generatedArtifacts: GeneratedArtifacts;
+	/**
+	 * Row-level RBAC scope for this run. When set with a non-null
+	 * employeeIds array, execute_sql refuses queries on employee-
+	 * scoped tables that don't reference at least one allowed ID.
+	 * null / undefined = unrestricted.
+	 */
+	viewerScope?: ViewerScope;
 	/**
 	 * Admin mode: when true, `execute_sql` runs read-only SQL over nao's own
 	 * project-scoped app-database views instead of the user's warehouse.

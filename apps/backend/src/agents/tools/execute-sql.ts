@@ -8,6 +8,7 @@ import { getExecuteSqlPartByQueryIdInChat, updateExecuteSqlPart } from '../../qu
 import { runQueryOnLocalFiles } from '../../services/local-query.service';
 import { ToolContext } from '../../types/tools';
 import { detectQueryRowLimit, isReadOnlySqlQuery } from '../../utils/sql-filter';
+import { preflightScopeFilter } from '../../utils/sql-scope-filter';
 import { createTool } from '../../utils/tools';
 import { queryAppDb } from './query-app-db';
 
@@ -26,6 +27,15 @@ export async function executeQuery(
 			'Write SQL operations are disabled. Only SELECT queries are allowed. ' +
 				'Enable "Dangerous write permissions" in the admin panel to allow INSERT, UPDATE, DELETE and DDL queries.',
 		);
+	}
+
+	// Row-level RBAC preflight. When the run has a viewerScope, refuse
+	// any SQL that touches an employee-scoped table without at least
+	// one allowed ID quoted somewhere in the query. The error message
+	// carries a suggestion the model can act on immediately.
+	const rbac = preflightScopeFilter(effectiveSql, context.viewerScope);
+	if (!rbac.ok) {
+		throw new Error(`${rbac.reason} ${rbac.suggestion}`);
 	}
 
 	if (save_to && context.adminMode) {

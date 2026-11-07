@@ -1,3 +1,4 @@
+import type { ViewerScope } from '../types/chat';
 import type { CustomBoundarySet } from '@nao/shared';
 import { fileExtension } from '@nao/shared/attachments';
 import { markSupersededExecuteSqlParts } from '@nao/shared/execute-sql-parts';
@@ -157,9 +158,10 @@ export async function buildToolContext(opts: {
 	agentSettings?: AgentSettings | null;
 	adminMode?: boolean;
 	supportsCustomCharts?: boolean;
+	viewerScope?: ViewerScope;
 }): Promise<ToolContext> {
 	const base = await _buildContextBase(opts);
-	return { ...base, chatId: opts.chatId, adminMode: opts.adminMode ?? false };
+	return { ...base, chatId: opts.chatId, adminMode: opts.adminMode ?? false, viewerScope: opts.viewerScope };
 }
 
 export async function buildMcpToolContext(opts: {
@@ -316,8 +318,9 @@ export class AgentService {
 		agentSettings: AgentSettings | null,
 		adminMode?: boolean,
 		supportsCustomCharts?: boolean,
+		viewerScope?: ViewerScope,
 	): Promise<ToolContext> {
-		return buildToolContext({ projectId, userId, chatId, agentSettings, adminMode, supportsCustomCharts });
+		return buildToolContext({ projectId, userId, chatId, agentSettings, adminMode, supportsCustomCharts, viewerScope });
 	}
 
 	private _disposeAgent(chatId: string): void {

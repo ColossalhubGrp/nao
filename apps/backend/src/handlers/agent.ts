@@ -28,7 +28,7 @@ interface HandleAgentMessageResult {
 }
 
 export const handleAgentRoute = async (opts: HandleAgentMessageInput): Promise<HandleAgentMessageResult> => {
-	const { userId, message, messageToEditId, model, mentions, projectId, adminMode } = opts;
+	const { userId, message, messageToEditId, model, mentions, projectId, adminMode, viewerScope } = opts;
 
 	if (!projectId) {
 		throw new HandlerError('BAD_REQUEST', noProjectMessage());
@@ -75,8 +75,9 @@ export const handleAgentRoute = async (opts: HandleAgentMessageInput): Promise<H
 					tools: adminAgentTools,
 					systemPrompt: renderAdminSystemPrompt({ timezone: opts.timezone }),
 					adminMode: true,
+					viewerScope,
 				}
-			: undefined,
+			: { viewerScope },
 	);
 
 	const isForkedFirstMessage =
